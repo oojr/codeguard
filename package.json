@@ -1,0 +1,24 @@
+{
+  "name": "codeguard",
+  "version": "1.0.0",
+  "description": "**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "integrity:commit": "node tasks/commit.js",
+    "integrity:verify": "node tasks/verify.js",
+    "prebuild": "npm run integrity:verify",
+    "build": "echo 'Building secure production artifacts...'"
+  },
+  "keywords": [],
+  "author": "Olajide Ogundipe Jr",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ethers": "^6.17.0"
+  }
+}
