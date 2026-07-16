@@ -4,6 +4,41 @@
 
 CodeGuard is a secure on-chain file integrity logging system deployed on the **Monad Testnet**. It allows agents to commit and verify cryptographic hashes of critical project files (like `package-lock.json`) to ensure supply chain security.
 
+## How It Works
+
+```mermaid
+flowchart TB
+    subgraph AWS["❌ Traditional (AWS/Centralized)"]
+        direction TB
+        A1[Developer opens PR<br/>modified package-lock.json] --> A2[Human reviewer<br/>eyeballs diff, approves]
+        A2 --> A3[Single AWS KMS key<br/>signs approved hash]
+        A3 --> A4[(CloudTrail log<br/>private, mutable-ish)]
+        A4 --> A5["⚠️ One compromised key/role<br/>bypasses everything"]
+    end
+
+    subgraph CG["✅ CodeGuard (On-Chain)"]
+        direction TB
+        B1[Developer opens PR<br/>modified package-lock.json] --> B2[CI extracts pkg@version<br/>+ integrity hash]
+        B2 --> B3{Check Monad contract<br/>approvedHash for keccak256 key}
+        B3 -->|Missing/Mismatch| B4[CI fails →<br/>requestApproval on-chain]
+        B4 --> B5["N-of-M maintainer wallets<br/>independently sign"]
+        B5 --> B6{{Quorum reached?}}
+        B6 -->|Yes| B7[(Public append-only registry<br/>HashApproved event emitted)]
+        B7 --> B8[CI re-checks → passes<br/>PR unblocked]
+        B3 -->|Match| B8
+        B6 -->|No| B4
+        B8 --> B9["🛡️ Compromising 1 of N signers<br/>is worthless without collusion"]
+    end
+
+    ATTACK[/"Same lockfile tampering attempt"/] --> A1
+    ATTACK --> B1
+
+    style AWS fill:#2a1414,stroke:#8b2c2c,color:#eee
+    style CG fill:#0f2418,stroke:#2f9e5e,color:#eee
+    style A5 fill:#8b2c2c,color:#fff
+    style B9 fill:#2f9e5e,color:#fff
+```
+
 ## Project Structure
 
 - `src/`: Smart contract source code (`AgentIntegrityLog.sol`).
