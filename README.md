@@ -91,6 +91,15 @@ You can override either by setting `MONAD_KEYSTORE_PATH` and `MONAD_KEYSTORE_PAS
 
 If no keystore is found, the commit task falls back to a `PRIVATE_KEY` environment variable — this fallback exists for local testing only and should not be relied on for real deployments.
 
+## Roadmap
+
+CodeGuard is evolving to provide even deeper security and better developer experience. Upcoming features include:
+
+- **Full Codebase Hashing**: Support for recursively hashing entire source directories rather than just lockfiles, providing a complete snapshot of project integrity.
+- **Hashing Optionality**: Flexible configuration to include/exclude specific files, directories, or patterns (similar to `.gitignore`) when calculating integrity hashes.
+- **NPM CLI Interface**: A dedicated command-line interface published to npm (`@codeguard/cli`) to allow developers to easily integrate integrity checks into any project without manual script copying.
+- **Multi-Chain Support**: Expanding deployment beyond Monad to other EVM-compatible networks.
+
 ## Testing
 
 Run the Solidity test suite:
