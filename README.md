@@ -1,5 +1,7 @@
 # CodeGuard
 
+![CodeGuard Screenshot](./codeguard-screenshot.png)
+
 CodeGuard is a secure on-chain file integrity logging system deployed on the **Monad Testnet**. It allows agents to commit and verify cryptographic hashes of critical project files (like `package-lock.json`) to ensure supply chain security.
 
 ## Project Structure
