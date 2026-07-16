@@ -1,66 +1,98 @@
-## Foundry
+# CodeGuard
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+CodeGuard is a secure on-chain file integrity logging system deployed on the **Monad Testnet**. It allows agents to commit and verify cryptographic hashes of critical project files (like `package-lock.json`) to ensure supply chain security.
 
-Foundry consists of:
+## Project Structure
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+- `src/`: Smart contract source code (`AgentIntegrityLog.sol`).
+- `script/`: Foundry deployment and interaction scripts.
+- `frontend/`: React + Vite + Tailwind dashboard for monitoring and manual verification.
+- `tasks/`: Node.js helper scripts for CI/CD integration.
 
-## Documentation
+## Smart Contract Deployment
 
-https://book.getfoundry.sh/
+To deploy your own instance of the `AgentIntegrityLog` contract to Monad Testnet:
 
-## Usage
+### 1. Prerequisites
 
-### Build
+- [Foundry](https://book.getfoundry.sh/getting-started/installation) installed.
+- A Monad Testnet account with funds (get some from the faucet).
 
-```shell
-$ forge build
+### 2. Set Up a Monad Keystore
+
+CodeGuard never uses a raw private key in `.env`. Instead, deployment and commit tasks sign using an encrypted Foundry keystore plus a password file.
+
+**See [`KEYSTORE.md`](./KEYSTORE.md) for full setup instructions.** Short version:
+
+```bash
+# Generate and encrypt a new key into a Foundry keystore
+cast wallet import monad-deployer --private-key $(cast wallet new | grep 'Private key:' | awk '{print $3}')
+
+# Save the same password you just chose, for non-interactive script use
+echo "YOUR_KEYSTORE_PASSWORD" > ~/.monad-keystore-password
+chmod 600 ~/.monad-keystore-password
 ```
 
-### Test
+### 3. Configure Public Environment Variables
 
-```shell
-$ forge test
+Create a `.env` file in the root directory containing only non-sensitive configuration parameters:
+
+```bash
+CONTRACT_ADDRESS="0x25535A6d53459c5AF12299D44273f4da2184553D"
+RPC_URL=https://testnet-rpc.monad.xyz
 ```
 
-### Format
+No private key or password ever goes in `.env`.
 
-```shell
-$ forge fmt
+### 4. Deploy
+
+Deploy your contract using your encrypted keystore account alias:
+
+```bash
+forge script script/AgentIntegrityLog.s.sol:DeployIntegrityLog \
+  --rpc-url $RPC_URL \
+  --broadcast \
+  --account monad-deployer
 ```
 
-### Gas Snapshots
+Foundry will prompt for the keystore password interactively during deployment.
 
-```shell
-$ forge snapshot
+## Frontend
+
+The dashboard code is located in the `/frontend` directory. It allows you to visualize the integrity logs and manually verify files.
+
+To run the frontend locally:
+
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-### Anvil
+Refer to `frontend/README.md` for more details on hashing modes and deployment.
 
-```shell
-$ anvil
-```
+## Integrity Tasks
 
-### Deploy
+This project includes automation scripts in the root `package.json` to commit and verify hashes during development or CI:
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+- **Commit Hash**: `npm run integrity:commit` (Calculates and sends the current project hash to the contract).
+- **Verify Hash**: `npm run integrity:verify` (Checks if the local files match the last on-chain checkpoint).
 
-### Cast
+### Configuration for Commit/Verify Tasks
 
-```shell
-$ cast <subcommand>
-```
+`tasks/commit.js` and `tasks/verify.js` use the following default paths for signing/reading:
 
-### Help
+- **Keystore**: `~/.foundry/keystores/monad-deployer` (created via `cast wallet import`)
+- **Password file**: `~/.monad-keystore-password`
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+You can override either by setting `MONAD_KEYSTORE_PATH` and `MONAD_KEYSTORE_PASSWORD_FILE` in your `.env` file. See [`KEYSTORE.md`](./KEYSTORE.md) for full setup and troubleshooting.
+
+If no keystore is found, the commit task falls back to a `PRIVATE_KEY` environment variable — this fallback exists for local testing only and should not be relied on for real deployments.
+
+## Testing
+
+Run the Solidity test suite:
+
+```bash
+forge test
 ```
